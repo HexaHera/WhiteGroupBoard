@@ -92,6 +92,38 @@ const RoomType = styled.span`
   margin-left: 10px;
 `;
 
+const RoomCode = styled(RoomType)`
+  color: ${({ theme }) => theme.colors.accent};
+  font-weight: 500;
+  margin-left: 0;
+`;
+
+const RoomIconButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  margin-left: 8px;
+`;
+
+const CopiedTooltip = styled.span`
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: ${({ theme }) => theme.colors.accent};
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.85em;
+  z-index: 10;
+  white-space: nowrap;
+`;
+
 const JoinBtnRow = styled.div`
   display: flex;
   align-items: center;
@@ -100,7 +132,7 @@ const JoinBtnRow = styled.div`
 
 const JoinBtn = styled.button`
   background: ${({ theme }) => theme.colors.accent};
-  color: ${({ theme }) => theme.colors.text};
+  color: ${({ theme }) => theme.colors.accentText};
   border: none;
   border-radius: 8px;
   padding: 8px 18px;
@@ -110,9 +142,9 @@ const JoinBtn = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background 0.2s;
+  transition: all 0.2s;
   &:hover {
-    background: #ffe066;
+    filter: brightness(1.1);
   }
 `;
 
@@ -240,7 +272,6 @@ function Rooms({ user, onJoinRoom }) {
     setJoinLoading(false);
   };
 
-  // Join a room from "My Rooms"
   const handleJoinRoom = (roomId) => {
     onJoinRoom(roomId);
   };
@@ -352,43 +383,26 @@ function Rooms({ user, onJoinRoom }) {
                           {room.isPrivate ? <FiLock style={{ marginRight: 4 }} /> : <FiUnlock style={{ marginRight: 4 }} />}
                           {room.isPrivate ? 'Private' : 'Public'}
                         </RoomType>
-                        <RoomType style={{ color: '#FFD600', fontWeight: 500 }}>
+                        <RoomCode>
                           <FiKey style={{ marginRight: 4 }} />
                           {room.code}
-                          <button
-                            style={{
-                              background: 'none', border: 'none', cursor: 'pointer', marginLeft: 8, color: '#FFD600', padding: 0, display: 'inline-flex', alignItems: 'center',
-                              position: 'relative',
-                            }}
+                          <RoomIconButton
                             title="Copy code"
                             onClick={() => handleCopyCode(room.id, room.code)}
                           >
                             <FiCopy />
                             {copyStatus[room.id] && (
-                              <span style={{
-                                position: 'absolute',
-                                top: -24,
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                background: '#222',
-                                color: '#FFD600',
-                                borderRadius: 6,
-                                padding: '2px 8px',
-                                fontSize: '0.85em',
-                                zIndex: 10,
-                              }}>Copied!</span>
+                              <CopiedTooltip>Copied!</CopiedTooltip>
                             )}
-                          </button>
-                          <button
-                            style={{
-                              background: 'none', border: 'none', cursor: 'pointer', marginLeft: 4, color: '#FFD600', padding: 0, display: 'inline-flex', alignItems: 'center',
-                            }}
+                          </RoomIconButton>
+                          <RoomIconButton
+                            style={{ marginLeft: 4 }}
                             title="Share code"
                             onClick={() => handleShareCode(room)}
                           >
                             <FiShare2 />
-                          </button>
-                        </RoomType>
+                          </RoomIconButton>
+                        </RoomCode>
                       </RoomMeta>
                     </RoomInfo>
                     <JoinBtn onClick={() => handleJoinRoom(room.id)}>

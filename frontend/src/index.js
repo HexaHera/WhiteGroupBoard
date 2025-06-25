@@ -33,8 +33,8 @@ function Root() {
           bottom: 32,
           right: 32,
           zIndex: 1000,
-          background: dark ? '#FFD600' : '#23272E',
-          color: dark ? '#23272E' : '#FFD600',
+          background: dark ? '#E5739D' : '#282129',
+          color: dark ? '#FFFFFF' : '#E5739D',
           border: 'none',
           borderRadius: '50%',
           width: 48,
@@ -57,7 +57,4 @@ function Root() {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<Root />);
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();

@@ -52,14 +52,14 @@ const Button = styled.button`
   border: none;
   border-radius: 10px;
   background: ${({ theme }) => theme.colors.accent};
-  color: ${({ theme }) => theme.colors.text};
+  color: ${({ theme }) => theme.colors.accentText};
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 10px;
-  transition: background 0.2s;
+  transition: filter 0.2s;
   &:hover {
-    background: #ffe066;
+    filter: brightness(1.1);
   }
 `;
 

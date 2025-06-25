@@ -8,6 +8,7 @@ import ChatSidebar from './ChatSidebar';
 import styled from 'styled-components';
 import { FiLogOut } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import logo from './assets/web-logo.png';
 
 const AppContainer = styled.div`
   max-width: 1200px;
@@ -40,6 +41,17 @@ const Toolbar = styled(motion.div)`
   backdrop-filter: blur(8px);
 `;
 
+const TitleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const Logo = styled.img`
+  height: 40px;
+  width: 40px;
+`;
+
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
@@ -61,6 +73,7 @@ const Welcome = styled.span`
 
 const LogoutBtn = styled.button`
   background: ${({ theme }) => theme.colors.accent};
+  color: ${({ theme }) => theme.colors.accentText};
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -73,7 +86,7 @@ const LogoutBtn = styled.button`
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   &:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.16);
-    background: #ffe066;
+    filter: brightness(1.1);
   }
 `;
 
@@ -108,7 +121,10 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 style={{ fontWeight: 700, letterSpacing: 1 }}>DoodleDock</h2>
+            <TitleContainer>
+              <Logo src={logo} alt="DoodleDock Logo" />
+              <h2 style={{ margin: 0, fontWeight: 700, letterSpacing: 1 }}>DoodleDock</h2>
+            </TitleContainer>
             <UserInfo>
               <Welcome>Welcome, {user.email || user.displayName}</Welcome>
               <LogoutBtn title="Logout" onClick={() => signOut(auth)}>
@@ -141,7 +157,10 @@ function App() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 style={{ fontWeight: 700, letterSpacing: 1 }}>DoodleDock</h2>
+          <TitleContainer>
+            <Logo src={logo} alt="DoodleDock Logo" />
+            <h2 style={{ margin: 0, fontWeight: 700, letterSpacing: 1 }}>DoodleDock</h2>
+          </TitleContainer>
           <UserInfo>
             <Welcome>Welcome, {user.email || user.displayName}</Welcome>
             <LogoutBtn title="Logout" onClick={() => signOut(auth)}>

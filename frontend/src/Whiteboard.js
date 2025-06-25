@@ -8,9 +8,8 @@ import { motion } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = process.env.REACT_APP_API_BASE_URL;
 
-// Styled toolbar
 const LeftSidebar = styled(motion.div)`
   position: relative;
   height: 400px;
@@ -31,11 +30,34 @@ const LeftSidebar = styled(motion.div)`
   margin-right: 18px;
 `;
 
+const TooltipText = styled.span`
+  visibility: hidden;
+  width: auto;
+  min-width: 80px;
+  background-color: ${({ theme }) => theme.colors.accent};
+  color: ${({ theme }) => theme.colors.accentText};
+  text-align: center;
+  border-radius: 12px;
+  padding: 6px 12px;
+  position: absolute;
+  z-index: 1;
+  left: 110%;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 500;
+`;
+
 const ToolBtn = styled.button`
-  background: ${({ active, theme }) => active ? theme.colors.accent : 'transparent'};
-  color: ${({ active, theme }) => active ? theme.colors.text : theme.colors.text + '99'};
+  position: relative;
+  background: ${({ active, theme }) => active ? theme.colors.accentLight : 'transparent'};
+  color: ${({ theme }) => theme.colors.text};
+  opacity: ${({ active }) => (active ? 1 : 0.7)};
   border: none;
-  border-radius: 50%;
+  border-radius: 12px;
   width: 40px;
   height: 40px;
   display: flex;
@@ -43,11 +65,17 @@ const ToolBtn = styled.button`
   justify-content: center;
   cursor: pointer;
   font-size: 20px;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-  box-shadow: ${({ active }) => active ? '0 2px 8px rgba(0,0,0,0.10)' : 'none'};
+  transition: all 0.2s ease-in-out;
+  box-shadow: ${({ active, theme }) => active ? theme.colors.shadow : 'none'};
+
   &:hover {
-    background: ${({ theme }) => theme.colors.accent + 'cc'};
-    color: ${({ theme }) => theme.colors.text};
+    opacity: 1;
+    background: ${({ active, theme }) => active ? theme.colors.accentLight : theme.colors.accent + '20'};
+  }
+
+  &:hover ${TooltipText} {
+    visibility: visible;
+    opacity: 1;
   }
 `;
 
@@ -66,7 +94,7 @@ const CanvasWrapper = styled.div`
   height: 400px;
   box-shadow: ${({ theme }) => theme.colors.shadow};
   border-radius: ${({ theme }) => theme.borderRadius};
-  background: ${({ bg }) => bg || '#FDF6E3'};
+  background: ${({ bg }) => bg};
   overflow: hidden;
 `;
 
@@ -115,11 +143,49 @@ const MaximizeBtn = styled.button`
   font-size: 1.2rem;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-  transition: background 0.2s;
-  &:hover { background: #ffe066; }
+  transition: all 0.2s;
+  &:hover {
+    filter: brightness(1.1);
+  }
+`;
+
+const TextInputContainer = styled.form`
+  position: absolute;
+  z-index: 50;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: ${({ theme }) => theme.colors.toolbar};
+  border-radius: ${({ theme }) => theme.borderRadius};
+  box-shadow: ${({ theme }) => theme.colors.shadow};
+`;
+
+const TextInput = styled.input`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text};
+  padding: 8px 12px;
+  border-radius: 12px;
+  outline: none;
+  font-size: 1rem;
+`;
+
+const AddBtn = styled.button`
+  background: ${({ theme }) => theme.colors.accent};
+  color: ${({ theme }) => theme.colors.accentText};
+  border: none;
+  border-radius: 12px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: filter 0.2s;
+  &:hover {
+    filter: brightness(1.1);
+  }
 `;
 
 function Whiteboard({ user, roomId }) {
+  const theme = useTheme();
   const canvasRef = useRef(null);
   const [drawing, setDrawing] = useState(false);
   const [actions, setActions] = useState([]);
@@ -136,10 +202,15 @@ function Whiteboard({ user, roomId }) {
   const [fullscreen, setFullscreen] = useState(false);
   const [lastPoint, setLastPoint] = useState(null);
   const [currentStroke, setCurrentStroke] = useState([]);
-  const [canvasBgColor, setCanvasBgColor] = useState('#FDF6E3');
+  const [canvasBg, setCanvasBg] = useState('');
   const [cursorPos, setCursorPos] = useState(null);
   const [cursors, setCursors] = useState({});
   const [previewShape, setPreviewShape] = useState(null);
+
+  useEffect(() => {
+    // Set initial canvas background based on theme
+    setCanvasBg(theme.colors.background === '#FFF0F5' ? '#FEFBFB' : theme.colors.card);
+  }, [theme]);
 
   // Load existing drawing actions
   useEffect(() => {
@@ -228,7 +299,7 @@ function Whiteboard({ user, roomId }) {
     return () => unsub();
   }, [roomId]);
 
-  // Drawing logic for pen, rect, circle
+  // logic for pen, rect, circle
   const handlePointerDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -238,9 +309,8 @@ function Whiteboard({ user, roomId }) {
       setUndoStack([]);
       setLastPoint({ x, y });
       setCurrentStroke([{ x, y }]);
-      // Start a new path on the canvas
       const ctx = canvasRef.current.getContext('2d');
-      ctx.strokeStyle = eraser ? canvasBgColor : color;
+      ctx.strokeStyle = eraser ? canvasBg : color;
       ctx.lineWidth = eraser ? 16 : size;
       ctx.beginPath();
       ctx.moveTo(x, y);
@@ -255,9 +325,8 @@ function Whiteboard({ user, roomId }) {
     const y = e.clientY - rect.top;
     if (tool === 'pen' && drawing) {
       if (!lastPoint) return;
-      // Draw directly to canvas
       const ctx = canvasRef.current.getContext('2d');
-      ctx.strokeStyle = eraser ? canvasBgColor : color;
+      ctx.strokeStyle = eraser ? canvasBg : color;
       ctx.lineWidth = eraser ? 16 : size;
       ctx.beginPath();
       ctx.moveTo(lastPoint.x, lastPoint.y);
@@ -274,11 +343,10 @@ function Whiteboard({ user, roomId }) {
     setDrawing(false);
     setLastPoint(null);
     if (tool === 'pen' && currentStroke.length > 1) {
-      // Save the stroke as a single action
       const action = {
         type: 'stroke',
         points: currentStroke,
-        color: eraser ? canvasBgColor : color,
+        color: eraser ? canvasBg : color,
         size: eraser ? 16 : size,
       };
       setActions([...actions, action]);
@@ -371,11 +439,11 @@ function Whiteboard({ user, roomId }) {
     setActions([...actions, action]);
     setTextInput('');
     setTextPos(null);
-    // Save to Firestore (real-time)
-    saveAction(action);
+
+    saveAction(action); // Save to Firestore
   };
 
-  // Save to Firestore (real-time)
+  // Save to Firestore
   const saveAction = async (action) => {
     try {
       await updateDoc(doc(db, 'rooms', roomId), {
@@ -405,7 +473,7 @@ function Whiteboard({ user, roomId }) {
     pdf.save('whiteboard.pdf');
   };
 
-  // On pointer move, update cursor in Firestore
+  // On pointer move -> update cursor in Firestore
   const handleMouseMove = (e) => {
     if (!eraser) {
       setCursorPos(null);
@@ -417,14 +485,13 @@ function Whiteboard({ user, roomId }) {
     updateCursor(x, y, eraser ? 'Eraser' : tool.charAt(0).toUpperCase() + tool.slice(1));
   };
 
-  // On tool change, update Firestore
+  // update Firestore on chnging tool
   useEffect(() => {
     if (!canvasRef.current) return;
-    // Use center of canvas as default
     const x = canvasRef.current.width / 2;
     const y = canvasRef.current.height / 2;
     updateCursor(x, y, eraser ? 'Eraser' : tool.charAt(0).toUpperCase() + tool.slice(1));
-    // eslint-disable-next-line
+
   }, [tool, eraser]);
 
   const handleMouseLeave = () => setCursorPos(null);
@@ -440,35 +507,45 @@ function Whiteboard({ user, roomId }) {
             transition={{ duration: 0.5 }}
             style={{ height: '80vh', minWidth: 60, maxWidth: 70 }}
           >
-            <ToolBtn active={tool === 'pen'} onClick={() => { setTool('pen'); setEraser(false); }} title="Pen">
+            <ToolBtn active={tool === 'pen'} onClick={() => { setTool('pen'); setEraser(false); }}>
               <FiEdit2 size={28} />
+              <TooltipText>Pen</TooltipText>
             </ToolBtn>
-            <ToolBtn active={tool === 'rect'} onClick={() => { setTool('rect'); setEraser(false); }} title="Rectangle">
+            <ToolBtn active={tool === 'rect'} onClick={() => { setTool('rect'); setEraser(false); }}>
               <FiSquare size={28} />
+              <TooltipText>Rectangle</TooltipText>
             </ToolBtn>
-            <ToolBtn active={tool === 'circle'} onClick={() => { setTool('circle'); setEraser(false); }} title="Circle">
+            <ToolBtn active={tool === 'circle'} onClick={() => { setTool('circle'); setEraser(false); }}>
               <FiCircle size={28} />
+              <TooltipText>Circle</TooltipText>
             </ToolBtn>
-            <ToolBtn active={tool === 'text'} onClick={() => { setTool('text'); setEraser(false); }} title="Text">
+            <ToolBtn active={tool === 'text'} onClick={() => { setTool('text'); setEraser(false); }}>
               <FiType size={28} />
+              <TooltipText>Text</TooltipText>
             </ToolBtn>
-            <ToolBtn active={eraser} onClick={() => setEraser(e => !e)} title="Eraser">
+            <ToolBtn active={eraser} onClick={() => setEraser(e => !e)}>
               <MdOutlineAutoFixOff size={28} />
+              <TooltipText>Eraser</TooltipText>
             </ToolBtn>
-            <ToolBtn onClick={handleUndo} title="Undo">
+            <ToolBtn onClick={handleUndo}>
               <FiRotateCcw size={28} />
+              <TooltipText>Undo</TooltipText>
             </ToolBtn>
-            <ToolBtn onClick={handleRedo} title="Redo">
+            <ToolBtn onClick={handleRedo}>
               <FiRotateCw size={28} />
+              <TooltipText>Redo</TooltipText>
             </ToolBtn>
-            <ToolBtn onClick={handleClear} title="Clear">
+            <ToolBtn onClick={handleClear}>
               <FiTrash2 size={28} />
+              <TooltipText>Clear All</TooltipText>
             </ToolBtn>
-            <ToolBtn onClick={handleExportImage} title="Export as Image">
+            <ToolBtn onClick={handleExportImage}>
               <FiImage size={28} />
+              <TooltipText>Save as PNG</TooltipText>
             </ToolBtn>
-            <ToolBtn onClick={handleExportPDF} title="Export as PDF">
+            <ToolBtn onClick={handleExportPDF}>
               <FiDownload size={28} />
+              <TooltipText>Save as PDF</TooltipText>
             </ToolBtn>
             <div style={{ marginTop: 24, textAlign: 'center' }} title="Pen Color">
               <label style={{ fontSize: 12, display: 'block', marginBottom: 2 }}>Pen Color</label>
@@ -484,8 +561,9 @@ function Whiteboard({ user, roomId }) {
               <label style={{ fontSize: 12, display: 'block', marginBottom: 2 }}>Canvas Color</label>
               <Picker
                 type="color"
-                value={canvasBgColor}
-                onChange={e => setCanvasBgColor(e.target.value)}
+                value={canvasBg}
+                onChange={e => setCanvasBg(e.target.value)}
+                disabled={eraser}
                 title="Canvas Background Color"
               />
             </div>
@@ -502,7 +580,7 @@ function Whiteboard({ user, roomId }) {
               />
             </div>
           </LeftSidebar>
-          <FullscreenCanvasWrapper bg={canvasBgColor}>
+          <FullscreenCanvasWrapper bg={canvasBg}>
             <MaximizeBtn onClick={() => setFullscreen(false)} title="Minimize">
               <FiMinimize2 size={22} />
             </MaximizeBtn>
@@ -511,15 +589,29 @@ function Whiteboard({ user, roomId }) {
                 ref={canvasRef}
                 width={window.innerWidth * 0.7}
                 height={window.innerHeight * 0.7}
-                style={{ border: '1px solid #ccc', background: 'transparent', cursor: eraser ? 'none' : 'crosshair' }}
                 onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
-                onPointerLeave={e => { handlePointerUp(); handleMouseLeave(); }}
-                onPointerMove={e => { handlePointerMove(e); handleMouseMove(e); }}
+                onClick={handleCanvasClick}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
-                onClick={handleCanvasClick}
+                style={{ cursor: tool === 'pen' ? 'crosshair' : 'default' }}
               />
+              {textPos && (
+                <TextInputContainer
+                  onSubmit={handleTextSubmit}
+                  style={{ top: textPos.y, left: textPos.x }}
+                >
+                  <TextInput
+                    type="text"
+                    value={textInput}
+                    onChange={e => setTextInput(e.target.value)}
+                    autoFocus
+                    placeholder="Type here..."
+                  />
+                  <AddBtn type="submit">Add</AddBtn>
+                </TextInputContainer>
+              )}
               {eraser && cursorPos && (
                 <div
                   style={{
@@ -608,18 +700,6 @@ function Whiteboard({ user, roomId }) {
               )}
             </div>
           </FullscreenCanvasWrapper>
-          {textPos && tool === 'text' && (
-            <form onSubmit={handleTextSubmit} style={{ position: 'absolute', left: textPos.x + 40, top: textPos.y + 120, zIndex: 10 }}>
-              <input
-                autoFocus
-                type="text"
-                value={textInput}
-                onChange={e => setTextInput(e.target.value)}
-                style={{ fontSize: size * 6 + 12, color, border: '1px solid #888', background: '#fff' }}
-              />
-              <button type="submit">Add</button>
-            </form>
-          )}
           {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
         </WhiteboardLayout>
       </FullscreenOverlay>
@@ -630,35 +710,45 @@ function Whiteboard({ user, roomId }) {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <ToolBtn active={tool === 'pen'} onClick={() => { setTool('pen'); setEraser(false); }} title="Pen">
+          <ToolBtn active={tool === 'pen'} onClick={() => { setTool('pen'); setEraser(false); }}>
             <FiEdit2 size={28} />
+            <TooltipText>Pen</TooltipText>
           </ToolBtn>
-          <ToolBtn active={tool === 'rect'} onClick={() => { setTool('rect'); setEraser(false); }} title="Rectangle">
+          <ToolBtn active={tool === 'rect'} onClick={() => { setTool('rect'); setEraser(false); }}>
             <FiSquare size={28} />
+            <TooltipText>Rectangle</TooltipText>
           </ToolBtn>
-          <ToolBtn active={tool === 'circle'} onClick={() => { setTool('circle'); setEraser(false); }} title="Circle">
+          <ToolBtn active={tool === 'circle'} onClick={() => { setTool('circle'); setEraser(false); }}>
             <FiCircle size={28} />
+            <TooltipText>Circle</TooltipText>
           </ToolBtn>
-          <ToolBtn active={tool === 'text'} onClick={() => { setTool('text'); setEraser(false); }} title="Text">
+          <ToolBtn active={tool === 'text'} onClick={() => { setTool('text'); setEraser(false); }}>
             <FiType size={28} />
+            <TooltipText>Text</TooltipText>
           </ToolBtn>
-          <ToolBtn active={eraser} onClick={() => setEraser(e => !e)} title="Eraser">
+          <ToolBtn active={eraser} onClick={() => setEraser(e => !e)}>
             <MdOutlineAutoFixOff size={28} />
+            <TooltipText>Eraser</TooltipText>
           </ToolBtn>
-          <ToolBtn onClick={handleUndo} title="Undo">
+          <ToolBtn onClick={handleUndo}>
             <FiRotateCcw size={28} />
+            <TooltipText>Undo</TooltipText>
           </ToolBtn>
-          <ToolBtn onClick={handleRedo} title="Redo">
+          <ToolBtn onClick={handleRedo}>
             <FiRotateCw size={28} />
+            <TooltipText>Redo</TooltipText>
           </ToolBtn>
-          <ToolBtn onClick={handleClear} title="Clear">
+          <ToolBtn onClick={handleClear}>
             <FiTrash2 size={28} />
+            <TooltipText>Clear All</TooltipText>
           </ToolBtn>
-          <ToolBtn onClick={handleExportImage} title="Export as Image">
+          <ToolBtn onClick={handleExportImage}>
             <FiImage size={28} />
+            <TooltipText>Save as PNG</TooltipText>
           </ToolBtn>
-          <ToolBtn onClick={handleExportPDF} title="Export as PDF">
+          <ToolBtn onClick={handleExportPDF}>
             <FiDownload size={28} />
+            <TooltipText>Save as PDF</TooltipText>
           </ToolBtn>
           <div style={{ marginTop: 24, textAlign: 'center' }} title="Pen Color">
             <label style={{ fontSize: 12, display: 'block', marginBottom: 2 }}>Pen Color</label>
@@ -674,8 +764,9 @@ function Whiteboard({ user, roomId }) {
             <label style={{ fontSize: 12, display: 'block', marginBottom: 2 }}>Canvas Color</label>
             <Picker
               type="color"
-              value={canvasBgColor}
-              onChange={e => setCanvasBgColor(e.target.value)}
+              value={canvasBg}
+              onChange={e => setCanvasBg(e.target.value)}
+              disabled={eraser}
               title="Canvas Background Color"
             />
           </div>
@@ -692,7 +783,7 @@ function Whiteboard({ user, roomId }) {
             />
           </div>
         </LeftSidebar>
-        <CanvasWrapper bg={canvasBgColor}>
+        <CanvasWrapper bg={canvasBg}>
           <MaximizeBtn onClick={() => setFullscreen(true)} title="Maximize">
             <FiMaximize2 size={22} />
           </MaximizeBtn>
@@ -701,14 +792,29 @@ function Whiteboard({ user, roomId }) {
               ref={canvasRef}
               width={700}
               height={400}
-              style={{ cursor: eraser ? 'cell' : tool === 'pen' ? 'crosshair' : tool === 'rect' || tool === 'circle' ? 'crosshair' : 'default', background: canvasBgColor }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
+              onClick={handleCanvasClick}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              onClick={handleCanvasClick}
+              style={{ cursor: tool === 'pen' ? 'crosshair' : 'default' }}
             />
+            {textPos && (
+              <TextInputContainer
+                onSubmit={handleTextSubmit}
+                style={{ top: textPos.y, left: textPos.x }}
+              >
+                <TextInput
+                  type="text"
+                  value={textInput}
+                  onChange={e => setTextInput(e.target.value)}
+                  autoFocus
+                  placeholder="Type here..."
+                />
+                <AddBtn type="submit">Add</AddBtn>
+              </TextInputContainer>
+            )}
             {eraser && cursorPos && (
               <div
                 style={{
@@ -724,7 +830,7 @@ function Whiteboard({ user, roomId }) {
                 }}
               />
             )}
-            {/* Render other users' cursors */}
+            {/* Render other user's cursors */}
             {Object.entries(cursors).map(([uid, c]) => (
               uid !== user.uid && c.x != null && c.y != null ? (
                 <div key={uid} style={{
@@ -797,18 +903,6 @@ function Whiteboard({ user, roomId }) {
             )}
           </div>
         </CanvasWrapper>
-        {textPos && tool === 'text' && (
-          <form onSubmit={handleTextSubmit} style={{ position: 'absolute', left: textPos.x + 40, top: textPos.y + 120, zIndex: 10 }}>
-            <input
-              autoFocus
-              type="text"
-              value={textInput}
-              onChange={e => setTextInput(e.target.value)}
-              style={{ fontSize: size * 6 + 12, color, border: '1px solid #888', background: '#fff' }}
-            />
-            <button type="submit">Add</button>
-          </form>
-        )}
         {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
       </WhiteboardLayout>
     )
