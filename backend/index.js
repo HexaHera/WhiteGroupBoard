@@ -11,7 +11,15 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const app = express();
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'] }));
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'https://localhost:5050',
+    'https://doodledock.vercel.app'
+  ]
+}));
 app.use(express.json());
 
 app.get('/health', (req, res) => {
