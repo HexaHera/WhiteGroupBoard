@@ -1,6 +1,33 @@
 # DoodleDock
 
-A modern collaborative whiteboard app for teams and classrooms.
+A modern collaborative whiteboard app for teams and classrooms, deployed with a modern cloud stack:
+- **Frontend:** Vercel
+- **Backend:** Render
+- **Authentication & Database:** Firebase
+
+---
+
+## Live Demo
+
+- **Frontend (Vercel):** [https://doodledock.vercel.app](https://doodledock.vercel.app)
+- **Backend (Render):** [https://doodledock.onrender.com](https://doodledock.onrender.com)
+
+---
+
+## Tech Stack
+
+- **Frontend:** React, styled-components, framer-motion, deployed on Vercel
+- **Backend:** Node.js, Express, deployed on Render
+- **Database & Auth:** Firebase (Firestore, Firebase Auth)
+- **Other:** REST API, modern responsive UI
+
+---
+
+## How to Invite Friends
+
+1. Share the frontend link: [https://doodledock.vercel.app](https://doodledock.vercel.app)
+2. After logging in, create a room. Copy the room code or URL from your browser.
+3. Send the room link or code to your friends, so that they can join and collaborate in real time. 
 
 ---
 
@@ -27,7 +54,8 @@ WhiteBoard/
 
 ## Backend (Node.js/Express + Firebase)
 - Handles room creation, joining, whiteboard data, and user authentication.
-- Uses Firestore for data storage.
+- Uses Firestore for data storage (Firebase).
+- Deployed on Render.
 - Endpoints include:
   - `POST /rooms` (create room)
   - `GET /rooms` (list rooms)
@@ -46,6 +74,7 @@ WhiteBoard/
 - Uses Firebase Auth for authentication.
 - Communicates with backend via REST API.
 - Modern UI with styled-components and framer-motion.
+- Deployed on Vercel.
 
 ---
 
@@ -62,30 +91,23 @@ git clone https://github.com/YOUR-USERNAME/YOUR-REPO.git
 cd WhiteBoard
 ```
 
-### 2. Backend Setup
+### 2. Backend Setup (Render deployment or local)
 ```sh
 cd backend
 npm install
-# Place your serviceAccountKey.json in backend/
-# Create a .env file with:
-# PORT=5000
-# FIREBASE_DATABASE_URL=your_firebase_db_url
 npm start
 ```
 
-### 3. Frontend Setup
+### 3. Frontend Setup (Vercel deployment or local)
 ```sh
 cd ../frontend
 npm install
-# Create a .env file with your Firebase config:
-# REACT_APP_API_BASE_URL=http://localhost:5000
-# REACT_APP_FIREBASE_API_KEY=...
-# (other REACT_APP_FIREBASE_... keys)
 npm start
 ```
 
 ### 4. Open in Browser
-- Visit [http://localhost:3000](http://localhost:3000)
+- Visit [http://localhost:3000](http://localhost:3000) (for local - on your laptop)
+- Or use the deployed link: [https://doodledock.vercel.app](https://doodledock.vercel.app)
 
 ---
 
@@ -95,10 +117,11 @@ npm start
 ```
 PORT=5000
 FIREBASE_DATABASE_URL=your_firebase_db_url
+FIREBASE_SERVICE_ACCOUNT=your_service_account_json (as a single line)
 ```
 **Frontend (.env):**
 ```
-REACT_APP_API_BASE_URL=http://localhost:5000
+REACT_APP_API_BASE_URL=https://doodledock.onrender.com
 REACT_APP_FIREBASE_API_KEY=...
 REACT_APP_FIREBASE_AUTH_DOMAIN=...
 REACT_APP_FIREBASE_PROJECT_ID=...
@@ -115,7 +138,3 @@ REACT_APP_FIREBASE_APP_ID=...
 - All sensitive files are listed in `.gitignore`.
 
 ---
-
-## License
-
-MIT (or your preferred license) 

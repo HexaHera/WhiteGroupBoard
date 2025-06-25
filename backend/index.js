@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT); // After backend deploy
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT); // Uses your Firebase service account
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -16,21 +16,26 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3002',
+    'https://localhost:5000',
     'https://localhost:5050',
+    'https://localhost:8080',
+    'https://localhost:8000',
     'https://doodledock.vercel.app'
   ]
 }));
 app.use(express.json());
 
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.send('Firebase backend is running');
 });
 
 // Example: Create a room
-db.collection('rooms'); // This is how you would access Firestore collections
+db.collection('rooms');
 
+// Generates a 6-character room code that's easy to read
 const generateRoomCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I for clarity
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Excludes similar-looking characters
   let code = '';
   for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
@@ -97,7 +102,7 @@ app.get('/rooms/mine', verifyFirebaseToken, async (req, res) => {
   }
 });
 
-// Middleware to verify Firebase ID token
+// Middleware to check if the user is logged in with Firebase
 async function verifyFirebaseToken(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
